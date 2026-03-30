@@ -304,7 +304,12 @@
             const box = document.getElementById('suggestionsBox');
             const list = document.getElementById('suggestionsList');
             if (data.suggestions && data.suggestions.length > 0) {
-                list.innerHTML = data.suggestions.map(s => `<li>${s}</li>`).join('');
+                list.innerHTML = '';
+                data.suggestions.forEach(s => {
+                    const li = document.createElement('li');
+                    li.textContent = s;
+                    list.appendChild(li);
+                });
                 box.style.display = 'block';
             } else {
                 box.style.display = 'none';
