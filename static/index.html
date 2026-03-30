@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Strength Analyzer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            margin-bottom: 0.3rem;
+            color: #fff;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        input[type="password"], input[type="text"] {
+            width: 100%;
+            padding: 14px 50px 14px 16px;
+            background: #1a1a2e;
+            border: 2px solid #2a2a4a;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: #5b6abf; }
+
+        .toggle-vis {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .strength-bar {
+            height: 6px;
+            background: #1a1a2e;
+            border-radius: 3px;
+            margin-bottom: 0.8rem;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 3px;
+            transition: width 0.4s ease, background 0.4s ease;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .result-label { color: #888; }
+        .result-value { color: #fff; font-weight: 600; }
+
+        .suggestions {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #1a1a2e;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .suggestions h3 {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+
+        .suggestions li {
+            font-size: 0.85rem;
+            margin-bottom: 0.3rem;
+            margin-left: 1.2rem;
+            color: #ccc;
+        }
+
+        .generate-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #2a2a4a;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: opacity 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover { opacity: 0.85; }
+
+        .btn-primary {
+            background: #5b6abf;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #2a2a4a;
+            color: #ccc;
+            margin-top: 0.5rem;
+        }
+
+        .generated-pw {
+            margin-top: 1rem;
+            padding: 12px 16px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            display: none;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            background: #2a2a4a;
+            border: none;
+            color: #ccc;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .options-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .options-row label {
+            font-size: 0.85rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .breach-warning {
+            margin-top: 0.8rem;
+            padding: 10px;
+            background: #3d1515;
+            border: 1px solid #7a2020;
+            border-radius: 6px;
+            color: #ff8888;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .color-weak { background: #e74c3c; }
+        .color-fair { background: #f39c12; }
+        .color-strong { background: #2ecc71; }
+        .color-very-strong { background: #00d4aa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Password Strength Analyzer</h1>
+        <p class="subtitle">Check how strong your password is</p>
+
+        <div class="input-group">
+            <input type="password" id="passwordInput" placeholder="Enter a password..." autocomplete="off">
+            <button class="toggle-vis" onclick="toggleVisibility()">&#128065;</button>
+        </div>
+
+        <div class="strength-bar">
+            <div class="strength-fill" id="strengthFill"></div>
+        </div>
+
+        <div id="results" style="display:none;">
+            <div class="result-row">
+                <span class="result-label">Strength</span>
+                <span class="result-value" id="strengthLabel">-</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Score</span>
+                <span class="result-value" id="scoreLabel">-</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Entropy</span>
+                <span class="result-value" id="entropyLabel">-</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Time to crack</span>
+                <span class="result-value" id="crackLabel">-</span>
+            </div>
+        </div>
+
+        <div class="breach-warning" id="breachWarning"></div>
+
+        <div class="suggestions" id="suggestionsBox">
+            <h3>Suggestions</h3>
+            <ul id="suggestionsList"></ul>
+        </div>
+
+        <div class="generate-section">
+            <div class="options-row">
+                <label><input type="checkbox" id="optUpper" checked> Uppercase</label>
+                <label><input type="checkbox" id="optDigits" checked> Digits</label>
+                <label><input type="checkbox" id="optSpecial" checked> Special</label>
+                <label><input type="checkbox" id="optNoAmbig"> No ambiguous</label>
+            </div>
+            <button class="btn btn-primary" onclick="generatePassword()">Generate Secure Password</button>
+            <div class="generated-pw" id="generatedPw">
+                <span id="generatedText"></span>
+                <button class="copy-btn" onclick="copyGenerated()">Copy</button>
+            </div>
+            <button class="btn btn-secondary" onclick="checkBreach()">Check Against Breaches</button>
+        </div>
+    </div>
+
+    <script>
+        // debounce so we don't spam the api on every keystroke
+        let debounceTimer;
+        const input = document.getElementById('passwordInput');
+
+        input.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (input.value.length > 0) {
+                    analyzePassword(input.value);
+                } else {
+                    clearResults();
+                }
+            }, 300);
+        });
+
+        async function analyzePassword(pw) {
+            try {
+                const res = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pw, check_breach: false })
+                });
+                const data = await res.json();
+                displayResults(data);
+            } catch (err) {
+                console.log('api error:', err);
+            }
+        }
+
+        function displayResults(data) {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('strengthLabel').textContent = data.strength;
+            document.getElementById('scoreLabel').textContent = data.score + '/100';
+            document.getElementById('entropyLabel').textContent = data.entropy_bits + ' bits';
+            document.getElementById('crackLabel').textContent = data.crack_time_display;
+
+            const fill = document.getElementById('strengthFill');
+            fill.style.width = data.score + '%';
+            fill.className = 'strength-fill';
+            if (data.score >= 80) fill.classList.add('color-very-strong');
+            else if (data.score >= 60) fill.classList.add('color-strong');
+            else if (data.score >= 40) fill.classList.add('color-fair');
+            else fill.classList.add('color-weak');
+
+            const box = document.getElementById('suggestionsBox');
+            const list = document.getElementById('suggestionsList');
+            if (data.suggestions && data.suggestions.length > 0) {
+                list.innerHTML = data.suggestions.map(s => `<li>${s}</li>`).join('');
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('suggestionsBox').style.display = 'none';
+            document.getElementById('breachWarning').style.display = 'none';
+            document.getElementById('strengthFill').style.width = '0%';
+        }
+
+        function toggleVisibility() {
+            const inp = document.getElementById('passwordInput');
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+        }
+
+        async function generatePassword() {
+            try {
+                const res = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        length: 20,
+                        include_upper: document.getElementById('optUpper').checked,
+                        include_digits: document.getElementById('optDigits').checked,
+                        include_special: document.getElementById('optSpecial').checked,
+                        exclude_ambiguous: document.getElementById('optNoAmbig').checked,
+                    })
+                });
+                const data = await res.json();
+                document.getElementById('generatedText').textContent = data.password;
+                document.getElementById('generatedPw').style.display = 'block';
+
+                // put it in the input too so they can see the score
+                input.value = data.password;
+                input.type = 'text';
+                analyzePassword(data.password);
+            } catch (err) {
+                console.log('generate error:', err);
+            }
+        }
+
+        async function checkBreach() {
+            const pw = input.value;
+            if (!pw) return;
+
+            try {
+                const res = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pw, check_breach: true })
+                });
+                const data = await res.json();
+                displayResults(data);
+
+                const warning = document.getElementById('breachWarning');
+                if (data.breach_count && data.breach_count > 0) {
+                    warning.textContent = `This password was found in ${data.breach_count.toLocaleString()} data breaches. Do not use it.`;
+                    warning.style.display = 'block';
+                } else if (data.breach_count === 0) {
+                    warning.textContent = 'Not found in any known breaches.';
+                    warning.style.background = '#153d15';
+                    warning.style.borderColor = '#207a20';
+                    warning.style.color = '#88ff88';
+                    warning.style.display = 'block';
+                } else {
+                    warning.style.display = 'none';
+                }
+            } catch (err) {
+                console.log('breach check error:', err);
+            }
+        }
+
+        function copyGenerated() {
+            const text = document.getElementById('generatedText').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 1500);
+            });
+        }
+    </script>
+</body>
+</html>
