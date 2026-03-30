@@ -19,14 +19,14 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# cors - wide open for now since it's a demo
-# TODO: lock this down for production
+# CORS - configurable via environment variable, defaults to localhost for safety
+_allowed_origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 
