@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Strength Analyzer | CryptoGuard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Fira+Code:wght@300;400;500&display=swap');
+:root{--bg:#0a0a0a;--surface:#111;--border:#1a3a1a;--green:#00ff41;--green-dim:#00cc33;--green-dark:#004d00;--red:#ff3333;--orange:#ff9500;--yellow:#ffd700;--text:#c0c0c0;--text-dim:#666}
+body{background:var(--bg);color:var(--green);font-family:'JetBrains Mono','Fira Code',monospace;min-height:100vh;overflow-x:hidden}
+/* Scanline overlay */
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,0.015) 2px,rgba(0,255,65,0.015) 4px);pointer-events:none;z-index:9999}
+/* CRT flicker */
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:0.98}}
+body{animation:flicker 0.15s infinite alternate}
+.container{max-width:800px;margin:0 auto;padding:20px}
+/* Header */
+.header{text-align:center;padding:40px 0 30px;position:relative}
+.header h1{font-size:clamp(1.4rem,4vw,2.2rem);font-weight:700;text-shadow:0 0 20px rgba(0,255,65,0.5),0 0 40px rgba(0,255,65,0.2);letter-spacing:2px}
+.header .subtitle{color:var(--text-dim);font-size:0.8rem;margin-top:8px;letter-spacing:4px;text-transform:uppercase}
+.cursor-blink{animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+/* Terminal window */
+.terminal{background:#0d0d0d;border:1px solid var(--border);border-radius:8px;margin:20px 0;overflow:hidden;box-shadow:0 0 30px rgba(0,255,65,0.05),inset 0 0 60px rgba(0,0,0,0.5)}
+.terminal-bar{background:#1a1a1a;padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.terminal-dot{width:10px;height:10px;border-radius:50%}
+.terminal-dot.r{background:#ff5f57}.terminal-dot.y{background:#febc2e}.terminal-dot.g{background:#28c840}
+.terminal-title{color:var(--text-dim);font-size:0.7rem;margin-left:auto}
+.terminal-body{padding:24px}
+/* Input area */
+.input-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.prompt{color:var(--green);font-weight:700;white-space:nowrap}
+.pwd-wrapper{flex:1;position:relative}
+#passwordInput{width:100%;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--green);font-family:inherit;font-size:1.1rem;padding:8px 40px 8px 0;outline:none;caret-color:var(--green)}
+#passwordInput:focus{border-bottom-color:var(--green-dim)}
+#passwordInput::placeholder{color:var(--text-dim)}
+.toggle-vis{position:absolute;right:0;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-dim);cursor:pointer;font-family:inherit;font-size:0.85rem;padding:4px 8px}
+.toggle-vis:hover{color:var(--green)}
+.input-hint{color:var(--text-dim);font-size:0.65rem;margin-bottom:16px}
+/* Strength meter */
+.meter-container{margin:20px 0}
+.meter-label{display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.75rem}
+.meter-track{height:6px;background:#1a1a1a;border-radius:3px;overflow:hidden;border:1px solid #222}
+.meter-fill{height:100%;width:0;border-radius:3px;transition:width 0.4s ease,background 0.4s ease;box-shadow:0 0 10px currentColor}
+/* Stats grid */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:20px 0}
+.stat-card{background:rgba(0,255,65,0.02);border:1px solid var(--border);border-radius:6px;padding:14px;transition:border-color 0.3s}
+.stat-card:hover{border-color:var(--green-dim)}
+.stat-label{font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.stat-value{font-size:1.1rem;font-weight:700}
+/* Character classes */
+.char-classes{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.char-badge{padding:5px 12px;border:1px solid var(--border);border-radius:4px;font-size:0.7rem;transition:all 0.3s;color:var(--text-dim)}
+.char-badge.active{border-color:var(--green);color:var(--green);background:rgba(0,255,65,0.08);box-shadow:0 0 8px rgba(0,255,65,0.15)}
+/* Crack time */
+.crack-time{margin:16px 0;padding:16px;background:rgba(0,0,0,0.4);border-left:3px solid var(--border);border-radius:0 6px 6px 0;transition:border-color 0.3s}
+.crack-time .label{font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px}
+.crack-time .time{font-size:1.4rem;font-weight:700;margin-top:4px}
+/* Warnings */
+.warnings{margin:12px 0}
+.warning-item{color:var(--red);font-size:0.75rem;padding:4px 0;opacity:0;transform:translateX(-10px);transition:all 0.3s}
+.warning-item.show{opacity:1;transform:translateX(0)}
+.warning-item::before{content:'[!] '}
+/* Generate button */
+.actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+.btn{background:transparent;border:1px solid var(--green-dark);color:var(--green);font-family:inherit;font-size:0.8rem;padding:10px 20px;cursor:pointer;border-radius:4px;transition:all 0.3s;letter-spacing:1px}
+.btn:hover{background:rgba(0,255,65,0.1);border-color:var(--green);box-shadow:0 0 15px rgba(0,255,65,0.15)}
+.btn:active{transform:scale(0.97)}
+/* Output log */
+.output-log{margin-top:16px;font-size:0.75rem;color:var(--text-dim);max-height:120px;overflow-y:auto}
+.output-log div{padding:2px 0}
+.output-log .ok{color:var(--green)}.output-log .warn{color:var(--orange)}.output-log .fail{color:var(--red)}
+/* Footer */
+.footer{text-align:center;padding:40px 0 20px;font-size:0.7rem;color:var(--text-dim)}
+.footer a{color:var(--green-dim);text-decoration:none}
+.footer a:hover{text-decoration:underline}
+/* Responsive */
+@media(max-width:600px){.container{padding:12px}.terminal-body{padding:16px}.stats{grid-template-columns:1fr}}
+/* Matrix rain background */
+.matrix-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.04}
+</style>
+</head>
+<body>
+<canvas class="matrix-bg" id="matrixCanvas"></canvas>
+<div class="container">
+  <div class="header">
+    <h1>&gt;_ CryptoGuard<span class="cursor-blink">|</span></h1>
+    <div class="subtitle">Password Strength Analyzer v2.1</div>
+  </div>
+
+  <div class="terminal">
+    <div class="terminal-bar">
+      <span class="terminal-dot r"></span>
+      <span class="terminal-dot y"></span>
+      <span class="terminal-dot g"></span>
+      <span class="terminal-title">cryptoguard@security:~$</span>
+    </div>
+    <div class="terminal-body">
+      <div class="input-row">
+        <span class="prompt">$&gt;</span>
+        <div class="pwd-wrapper">
+          <input type="password" id="passwordInput" placeholder="Enter password to analyze..." autocomplete="off" spellcheck="false">
+          <button class="toggle-vis" id="toggleVis" title="Toggle visibility">SHOW</button>
+        </div>
+      </div>
+      <div class="input-hint">// type to analyze in real-time</div>
+
+      <div class="meter-container">
+        <div class="meter-label">
+          <span>STRENGTH</span>
+          <span id="strengthLabel">---</span>
+        </div>
+        <div class="meter-track">
+          <div class="meter-fill" id="meterFill"></div>
+        </div>
+      </div>
+
+      <div class="char-classes" id="charClasses">
+        <span class="char-badge" data-class="lower">a-z</span>
+        <span class="char-badge" data-class="upper">A-Z</span>
+        <span class="char-badge" data-class="digit">0-9</span>
+        <span class="char-badge" data-class="special">!@#$</span>
+        <span class="char-badge" data-class="unicode">Unicode</span>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-label">Entropy</div>
+          <div class="stat-value" id="entropy">0.00 bits</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Length</div>
+          <div class="stat-value" id="length">0 chars</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Charset Size</div>
+          <div class="stat-value" id="charset">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Score</div>
+          <div class="stat-value" id="score">0 / 100</div>
+        </div>
+      </div>
+
+      <div class="crack-time" id="crackTime">
+        <div class="label">Estimated Crack Time (10B guesses/sec)</div>
+        <div class="time" id="crackTimeValue">---</div>
+      </div>
+
+      <div class="warnings" id="warnings"></div>
+
+      <div class="actions">
+        <button class="btn" id="generateBtn">[ GENERATE SECURE ]</button>
+        <button class="btn" id="clearBtn">[ CLEAR ]</button>
+        <button class="btn" id="copyBtn">[ COPY ]</button>
+      </div>
+
+      <div class="output-log" id="outputLog"></div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <a href="https://github.com/Vikrant892/password-strength-api" target="_blank">GitHub Repository</a>
+    &nbsp;&middot;&nbsp; Built by Vikrant Sharma
+  </footer>
+</div>
+
+<script>
+const COMMON_PASSWORDS=["123456","password","12345678","qwerty","123456789","12345","1234","111111","1234567","dragon","123123","baseball","abc123","football","monkey","letmein","shadow","master","666666","qwertyuiop","123321","mustang","1234567890","michael","654321","superman","1qaz2wsx","7777777","fuckyou","121212","000000","qazwsx","123qwe","killer","trustno1","jordan","jennifer","zxcvbnm","asdfgh","hunter","buster","soccer","harley","batman","andrew","tigger","sunshine","iloveyou","2000","charlie","robert","thomas","hockey","ranger","daniel","starwars","klaster","112233","george","computer","michelle","jessica","pepper","1111","zxcvbn","555555","11111111","131313","freedom","777777","pass","maggie","159753","aaaaaa","ginger","princess","joshua","cheese","amanda","summer","love","ashley","nicole","chelsea","biteme","matthew","access","yankees","987654321","dallas","austin","thunder","taylor","matrix","mobilemail","xxxxxx","bailey","admin","welcome","passw0rd","hello","passwd","cookie","test"];
+const input=document.getElementById('passwordInput');
+const toggleBtn=document.getElementById('toggleVis');
+const meterFill=document.getElementById('meterFill');
+const strengthLabel=document.getElementById('strengthLabel');
+const entropyEl=document.getElementById('entropy');
+const lengthEl=document.getElementById('length');
+const charsetEl=document.getElementById('charset');
+const scoreEl=document.getElementById('score');
+const crackTimeValue=document.getElementById('crackTimeValue');
+const crackTimeBox=document.getElementById('crackTime');
+const warningsEl=document.getElementById('warnings');
+const outputLog=document.getElementById('outputLog');
+const badges=document.querySelectorAll('.char-badge');
+
+toggleBtn.addEventListener('click',()=>{
+  const show=input.type==='password';
+  input.type=show?'text':'password';
+  toggleBtn.textContent=show?'HIDE':'SHOW';
+});
+
+input.addEventListener('input',analyze);
+
+function analyze(){
+  const pw=input.value;
+  if(!pw){resetUI();return}
+  const classes=detectClasses(pw);
+  const poolSize=calcPool(classes);
+  const entropy=pw.length*Math.log2(poolSize||1);
+  const score=calcScore(pw,entropy,classes);
+  const strength=getStrength(score);
+  const crackSec=Math.pow(2,entropy)/(10e9);
+
+  badges.forEach(b=>{b.classList.toggle('active',classes[b.dataset.class])});
+  entropyEl.textContent=entropy.toFixed(1)+' bits';
+  lengthEl.textContent=pw.length+' chars';
+  charsetEl.textContent=poolSize;
+  scoreEl.textContent=score+' / 100';
+
+  meterFill.style.width=score+'%';
+  meterFill.style.background=strength.color;
+  meterFill.style.color=strength.color;
+  strengthLabel.textContent=strength.label;
+  strengthLabel.style.color=strength.color;
+
+  crackTimeValue.textContent=humanTime(crackSec);
+  crackTimeValue.style.color=strength.color;
+  crackTimeBox.style.borderLeftColor=strength.color;
+
+  showWarnings(pw,classes,score);
+}
+
+function detectClasses(pw){
+  return{
+    lower:/[a-z]/.test(pw),
+    upper:/[A-Z]/.test(pw),
+    digit:/[0-9]/.test(pw),
+    special:/[^a-zA-Z0-9]/.test(pw),
+    unicode:/[^\x00-\x7F]/.test(pw)
+  };
+}
+
+function calcPool(c){
+  let s=0;
+  if(c.lower)s+=26;if(c.upper)s+=26;if(c.digit)s+=10;if(c.special)s+=33;if(c.unicode)s+=100;
+  return s;
+}
+
+function calcScore(pw,entropy,classes){
+  let s=0;
+  s+=Math.min(25,pw.length*2.5);
+  s+=Math.min(25,entropy/4);
+  let classCount=Object.values(classes).filter(Boolean).length;
+  s+=classCount*8;
+  if(COMMON_PASSWORDS.includes(pw.toLowerCase()))s=Math.min(s,5);
+  if(/^(.)\1+$/.test(pw))s=Math.min(s,8);
+  if(/^(012|123|234|345|456|567|678|789|abc|bcd|cde|def|qwe|wer|ert|asd|sdf|zxc)/.test(pw.toLowerCase()))s=Math.max(0,s-15);
+  return Math.min(100,Math.max(0,Math.round(s)));
+}
+
+function getStrength(score){
+  if(score<20)return{label:'CRITICAL',color:'#ff3333'};
+  if(score<40)return{label:'WEAK',color:'#ff6633'};
+  if(score<60)return{label:'FAIR',color:'#ff9500'};
+  if(score<80)return{label:'STRONG',color:'#ffd700'};
+  return{label:'EXCELLENT',color:'#00ff41'};
+}
+
+function humanTime(seconds){
+  if(seconds<0.001)return'Instant';
+  if(seconds<1)return(seconds*1000).toFixed(0)+' milliseconds';
+  if(seconds<60)return seconds.toFixed(1)+' seconds';
+  if(seconds<3600)return(seconds/60).toFixed(1)+' minutes';
+  if(seconds<86400)return(seconds/3600).toFixed(1)+' hours';
+  if(seconds<31536000)return(seconds/86400).toFixed(1)+' days';
+  if(seconds<31536000*1000)return(seconds/31536000).toFixed(1)+' years';
+  if(seconds<31536000*1e6)return(seconds/31536000/1000).toFixed(0)+'K years';
+  if(seconds<31536000*1e9)return(seconds/31536000/1e6).toFixed(0)+'M years';
+  return(seconds/31536000/1e9).toFixed(0)+'B years';
+}
+
+function showWarnings(pw,classes,score){
+  const w=[];
+  if(COMMON_PASSWORDS.includes(pw.toLowerCase()))w.push('Password found in common password dictionary');
+  if(pw.length<8)w.push('Password is too short (min 8 characters)');
+  if(!classes.upper)w.push('No uppercase letters detected');
+  if(!classes.digit)w.push('No digits detected');
+  if(!classes.special)w.push('No special characters detected');
+  if(/(.)\1{2,}/.test(pw))w.push('Repeated characters detected');
+  if(/^(012|123|234|345|456|567|678|789)/.test(pw))w.push('Sequential number pattern detected');
+  warningsEl.innerHTML=w.map(t=>`<div class="warning-item show">${t}</div>`).join('');
+}
+
+function resetUI(){
+  meterFill.style.width='0';
+  strengthLabel.textContent='---';strengthLabel.style.color='';
+  entropyEl.textContent='0.00 bits';lengthEl.textContent='0 chars';
+  charsetEl.textContent='0';scoreEl.textContent='0 / 100';
+  crackTimeValue.textContent='---';crackTimeValue.style.color='';
+  crackTimeBox.style.borderLeftColor='var(--border)';
+  badges.forEach(b=>b.classList.remove('active'));
+  warningsEl.innerHTML='';
+}
+
+document.getElementById('generateBtn').addEventListener('click',()=>{
+  const chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+  let pw='';const arr=new Uint32Array(20);crypto.getRandomValues(arr);
+  for(let i=0;i<20;i++)pw+=chars[arr[i]%chars.length];
+  input.value=pw;input.type='text';toggleBtn.textContent='HIDE';
+  analyze();
+  log('ok','Generated 20-char secure password');
+});
+
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  input.value='';input.type='password';toggleBtn.textContent='SHOW';resetUI();
+  log('warn','Buffer cleared');
+});
+
+document.getElementById('copyBtn').addEventListener('click',()=>{
+  if(!input.value){log('fail','Nothing to copy');return}
+  navigator.clipboard.writeText(input.value).then(()=>log('ok','Copied to clipboard')).catch(()=>log('fail','Copy failed'));
+});
+
+function log(cls,msg){
+  const d=document.createElement('div');d.className=cls;
+  const ts=new Date().toLocaleTimeString();
+  d.textContent=`[${ts}] ${msg}`;
+  outputLog.prepend(d);
+  if(outputLog.children.length>20)outputLog.lastChild.remove();
+}
+
+// Matrix rain
+const canvas=document.getElementById('matrixCanvas');
+const ctx=canvas.getContext('2d');
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight}
+resizeCanvas();window.addEventListener('resize',resizeCanvas);
+const cols=Math.floor(canvas.width/14);
+const drops=Array(cols).fill(1);
+function drawMatrix(){
+  ctx.fillStyle='rgba(10,10,10,0.05)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#00ff41';ctx.font='12px monospace';
+  for(let i=0;i<drops.length;i++){
+    const t=String.fromCharCode(0x30A0+Math.random()*96);
+    ctx.fillText(t,i*14,drops[i]*14);
+    if(drops[i]*14>canvas.height&&Math.random()>0.975)drops[i]=0;
+    drops[i]++;
+  }
+}
+setInterval(drawMatrix,50);
+
+input.focus();
+log('ok','CryptoGuard v2.1 initialized');
+</script>
+</body>
+</html>
