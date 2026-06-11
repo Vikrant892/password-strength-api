@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CryptoGuard — Password Strength Analyser</title>
+<title>CryptoGuard - Password Strength Analyser</title>
 <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -134,7 +134,7 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Epilogue',system-ui
 <section class="hero">
   <div>
     <h2>Your password<br>deserves <span class="l">entropy</span>.<br>Not <span class="c">guesses</span>.</h2>
-    <p>Shannon entropy + pattern heuristics + Have-I-Been-Pwned breach check via k-anonymity. Runs entirely in your browser — nothing leaves the client.</p>
+    <p>Shannon entropy + pattern heuristics + Have-I-Been-Pwned breach check via k-anonymity. Runs entirely in your browser - nothing leaves the client.</p>
   </div>
   <div class="lock-vis">
     <svg viewBox="0 0 200 200" fill="none"><rect x="50" y="80" width="100" height="90" rx="10" fill="#d4ff3a" stroke="#1a0f2e" stroke-width="3"/><path d="M 70 80 Q 70 40 100 40 Q 130 40 130 80" stroke="#d4ff3a" stroke-width="8" fill="none"/><circle cx="100" cy="110" r="10" fill="#1a0f2e"/><rect x="96" y="115" width="8" height="24" rx="2" fill="#1a0f2e"/></svg>
@@ -151,27 +151,27 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Epilogue',system-ui
 
 <section class="panel">
   <div class="ph">
-    <div><h3>Passphrase Analyser</h3><p>Type below — computed live in your browser</p></div>
+    <div><h3>Passphrase Analyser</h3><p>Type below - computed live in your browser</p></div>
     <span class="tag">SHA-1 · entropy · k-anon</span>
   </div>
 
   <div class="pw-input">
-    <input id="pw" type="password" placeholder="Type or paste a passphrase to analyse…" spellcheck="false" autocomplete="new-password" value="correct horse battery staple">
+    <input id="pw" type="password" placeholder="Type or paste a passphrase to analyse..." spellcheck="false" autocomplete="new-password" value="correct horse battery staple">
     <button class="eye" onclick="toggle()">show</button>
   </div>
 
   <div class="meter">
     <div class="meter-bar s1" id="meter"><div></div><div></div><div></div><div></div><div></div></div>
     <div class="meter-label">
-      <div class="lbl weak" id="lbl">—</div>
-      <div class="time">crack time: <b id="ct">—</b></div>
+      <div class="lbl weak" id="lbl">-</div>
+      <div class="time">crack time: <b id="ct">-</b></div>
     </div>
   </div>
 
   <div class="pstat">
-    <div class="ps e"><div class="l">Entropy</div><div class="n"><span id="ent">—</span> bits</div></div>
-    <div class="ps c"><div class="l">Charset Size</div><div class="n"><span id="cs">—</span></div></div>
-    <div class="ps t"><div class="l">Length</div><div class="n"><span id="len">—</span></div></div>
+    <div class="ps e"><div class="l">Entropy</div><div class="n"><span id="ent">-</span> bits</div></div>
+    <div class="ps c"><div class="l">Charset Size</div><div class="n"><span id="cs">-</span></div></div>
+    <div class="ps t"><div class="l">Length</div><div class="n"><span id="len">-</span></div></div>
   </div>
 
   <div class="checks" id="checks"></div>
@@ -180,7 +180,7 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Epilogue',system-ui
 <section class="grid-2">
   <div class="panel">
     <div class="ph"><div><h3>Generate Passphrase</h3><p>Cryptographically secure via SubtleCrypto</p></div></div>
-    <div class="gen-out" id="genOut">—</div>
+    <div class="gen-out" id="genOut">-</div>
     <div class="gen-controls">
       <label>Length <span id="glenV">20</span></label>
       <input type="range" id="glen" min="8" max="64" value="20" oninput="document.getElementById('glenV').textContent=this.value">
@@ -201,10 +201,10 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Epilogue',system-ui
   <div class="panel">
     <div class="ph"><div><h3>How HIBP k-Anonymity Works</h3><p>Only the first 5 hex chars of SHA-1 ever leave your device</p></div></div>
     <div class="hibp-flow">
-<span class="h">1.</span> Local: <span class="p">SHA-1(password)</span> → <span class="p">AABBCCDDEE…</span><br>
+<span class="h">1.</span> Local: <span class="p">SHA-1(password)</span> → <span class="p">AABBCCDDEE...</span><br>
 <span class="h">2.</span> Send only first 5 chars: <span class="p">GET /range/AABBC</span><br>
 <span class="h">3.</span> HIBP returns ~500 hash suffixes matching AABBC<br>
-<span class="h">4.</span> Client checks if <span class="p">DDEE…</span> is in the response<br>
+<span class="h">4.</span> Client checks if <span class="p">DDEE...</span> is in the response<br>
 <span class="h">5.</span> Password itself never transmitted<br>
 <span style="color:var(--lime)">✓</span> Result: true zero-knowledge breach lookup
     </div>
@@ -239,7 +239,7 @@ function analyse(){
   else if(e>=50){level=3;lbl='decent';cls='ok'}
   else if(e>=30){level=2;lbl='weak';cls='weak'}
   else if(e>0){level=1;lbl='very weak';cls='weak'}
-  else{lbl='—';cls='weak'}
+  else{lbl='-';cls='weak'}
   const m=document.getElementById('meter');m.className='meter-bar s'+level;
   const l=document.getElementById('lbl');l.textContent=lbl.toUpperCase();l.className='lbl '+cls;
 
@@ -267,13 +267,13 @@ function gen(){
   if(document.getElementById('gD').checked)pool+=D;
   if(document.getElementById('gS').checked)pool+=S;
   if(document.getElementById('gX').checked)pool=[...pool].filter(c=>!AMB.includes(c)).join('');
-  if(!pool){document.getElementById('genOut').textContent='— choose at least one class —';return}
+  if(!pool){document.getElementById('genOut').textContent='- choose at least one class -';return}
   const len=+document.getElementById('glen').value;
   const arr=new Uint32Array(len);crypto.getRandomValues(arr);
   let out='';for(let i=0;i<len;i++)out+=pool[arr[i]%pool.length];
   document.getElementById('genOut').textContent=out;
 }
-function copy(){const v=document.getElementById('genOut').textContent;if(!v||v.startsWith('—'))return;navigator.clipboard.writeText(v);const b=event.target;const o=b.textContent;b.textContent='✓ Copied';setTimeout(()=>b.textContent=o,1100)}
+function copy(){const v=document.getElementById('genOut').textContent;if(!v||v.startsWith('-'))return;navigator.clipboard.writeText(v);const b=event.target;const o=b.textContent;b.textContent='✓ Copied';setTimeout(()=>b.textContent=o,1100)}
 analyse();gen();
 </script>
 </body>

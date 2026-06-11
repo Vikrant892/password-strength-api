@@ -1,5 +1,9 @@
 import hashlib
+import logging
+
 import httpx
+
+logger = logging.getLogger(__name__)
 
 # hibp uses k-anonymity which is clever
 # you send the first 5 chars of the SHA-1 hash, they send back all matching suffixes
@@ -38,7 +42,7 @@ async def check_breach(password: str) -> dict:
 
         return {"breached": False, "breach_count": 0}
 
-    except (httpx.RequestError, httpx.TimeoutException):
-        # network issues shouldn't break the analyzer
-        # TODO: maybe add retry logic later? or at least log this
+    except (httpx.RequestError, httpx.TimeoutException) as exc:
+        # A network failure to HIBP must not break the analyzer; report unknown.
+        logger.warning("HIBP breach lookup failed: %s", exc)
         return {"breached": None, "breach_count": None}

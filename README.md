@@ -2,14 +2,14 @@
 
 Wanted to build something I'd actually use. Every time I create an account somewhere, I wonder if my password is actually good or if I'm just fooling myself with a capital letter and a `!` at the end.
 
-So I built this — a FastAPI service that scores passwords on a 0-100 scale, estimates crack time, checks if they've been leaked in data breaches (via Have I Been Pwned), and can generate strong random passwords.
+So I built this - a FastAPI service that scores passwords on a 0-100 scale, estimates crack time, checks if they've been leaked in data breaches (via Have I Been Pwned), and can generate strong random passwords.
 
 ## What it does
 
-- **Strength scoring** — rates passwords 0-100 based on length, character variety, entropy, common patterns (qwerty, 123456...), dictionary checks against known weak passwords, and penalties for repeated/sequential characters
-- **Breach detection** — checks the Have I Been Pwned database using k-anonymity (your password never leaves your machine in full — only the first 5 chars of the SHA-1 hash are sent)
-- **Password generation** — cryptographically secure random passwords with configurable length and character types
-- **Demo frontend** — dark-themed UI with real-time strength meter
+- **Strength scoring** - rates passwords 0-100 based on length, character variety, entropy, common patterns (qwerty, 123456...), dictionary checks against known weak passwords, and penalties for repeated/sequential characters
+- **Breach detection** - checks the Have I Been Pwned database using k-anonymity (your password never leaves your machine in full - only the first 5 chars of the SHA-1 hash are sent)
+- **Password generation** - cryptographically secure random passwords with configurable length and character types
+- **Demo frontend** - dark-themed UI with real-time strength meter
 
 ## Quick start
 
@@ -113,10 +113,10 @@ pytest tests/ -v
 
 ## Tech stack
 
-- **FastAPI** — modern async Python web framework
-- **Pydantic** — request/response validation
-- **httpx** — async HTTP client for HIBP API calls
-- **secrets** — stdlib module for cryptographic randomness
+- **FastAPI** - modern async Python web framework
+- **Pydantic** - request/response validation
+- **httpx** - async HTTP client for HIBP API calls
+- **secrets** - stdlib module for cryptographic randomness
 
 ## TODO
 
