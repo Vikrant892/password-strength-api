@@ -208,7 +208,7 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Epilogue',system-ui
 <span class="h">5.</span> Password itself never transmitted<br>
 <span style="color:var(--lime)">✓</span> Result: true zero-knowledge breach lookup
     </div>
-    <p style="margin-top:16px;color:var(--dim);font-size:13px;line-height:1.6">Production API endpoint: <code style="color:var(--lime);font-family:'JetBrains Mono',monospace">POST /api/v1/analyze</code> with <code style="color:var(--lime);font-family:'JetBrains Mono',monospace">check_breaches:true</code>. Full spec in GitHub README.</p>
+    <p style="margin-top:16px;color:var(--dim);font-size:13px;line-height:1.6">FastAPI endpoint: <code style="color:var(--lime);font-family:'JetBrains Mono',monospace">POST /analyze</code> with <code style="color:var(--lime);font-family:'JetBrains Mono',monospace">check_breach:true</code>. The API receives the submitted password; HIBP receives only a hash prefix. This standalone page performs its strength checks locally.</p>
   </div>
 </section>
 

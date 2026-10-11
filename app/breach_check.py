@@ -16,7 +16,7 @@ HIBP_API_URL = "https://api.pwnedpasswords.com/range/"
 async def check_breach(password: str) -> dict:
     """
     check if password has appeared in known data breaches
-    uses the HIBP k-anonymity model so the password never leaves your machine in full
+    uses HIBP k-anonymity: this API receives the password, but HIBP only receives a hash prefix
     """
     sha1_hash = hashlib.sha1(password.encode("utf-8")).hexdigest().upper()
     prefix = sha1_hash[:5]

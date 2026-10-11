@@ -7,7 +7,7 @@ So I built this - a FastAPI service that scores passwords on a 0-100 scale, esti
 ## What it does
 
 - **Strength scoring** - rates passwords 0-100 based on length, character variety, entropy, common patterns (qwerty, 123456...), dictionary checks against known weak passwords, and penalties for repeated/sequential characters
-- **Breach detection** - checks the Have I Been Pwned database using k-anonymity (your password never leaves your machine in full - only the first 5 chars of the SHA-1 hash are sent)
+- **Breach detection** - checks the Have I Been Pwned database using k-anonymity (only the first 5 characters of a SHA-1 hash are sent to HIBP; the API itself receives the submitted password)
 - **Password generation** - cryptographically secure random passwords with configurable length and character types
 - **Demo frontend** - dark-themed UI with real-time strength meter
 
@@ -98,12 +98,12 @@ Final score is clamped to 0-100.
 
 The API uses [Have I Been Pwned](https://haveibeenpwned.com/)'s k-anonymity model. Here's what happens:
 
-1. Your password is SHA-1 hashed locally
+1. The submitted password reaches this FastAPI server, which computes its SHA-1 hash
 2. Only the first 5 characters of the hash are sent to HIBP
 3. HIBP returns all hash suffixes that match that prefix
 4. We check if our full hash is in the returned list
 
-This means HIBP never sees your password or even your full hash. Pretty clever design by Troy Hunt.
+HIBP never receives the password or its full hash. This protects the external breach lookup; it does not make the FastAPI service client-only. Use HTTPS for hosted requests and avoid entering a password you currently use.
 
 ## Running tests
 
